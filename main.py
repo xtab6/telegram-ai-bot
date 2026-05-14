@@ -10,122 +10,166 @@ from telegram.ext import (
 from openai import OpenAI
 import os
 
+# =========================
+# ENV
+# =========================
+
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+# =========================
+# OPENROUTER CLIENT
+# =========================
 
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=OPENROUTER_API_KEY,
 )
 
+# =========================
+# SYSTEM PROMPT
+# =========================
+
 SYSTEM_PROMPT = """
 You are a cyberpunk hacker AI assistant.
-Speak like a cool terminal AI.
+
+Style:
+- Speak like a terminal AI
+- Cool cyberpunk vibe
+- Technical but simple
+- Use terminal aesthetics
 """
+
+# =========================
+# AI FUNCTION
+# =========================
+
+def ask_ai(text):
+
+    models = [
+        "meta-llama/llama-3.1-8b-instruct:free",
+        "mistralai/mistral-7b-instruct:free",
+    ]
+
+    for model in models:
+        try:
+            completion = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": SYSTEM_PROMPT
+                    },
+                    {
+                        "role": "user",
+                        "content": text
+                    }
+                ]
+            )
+
+            return completion.choices[0].message.content
+
+        except Exception as e:
+            print(f"MODEL ERROR {model}:", e)
+
+    return "AI core offline."
 
 # =========================
 # COMMANDS
 # =========================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "[ SYSTEM ONLINE ]\nCyber AI ready."
-    )
+
+    text = """
+[ SYSTEM ONLINE ]
+
+Cyber AI initialized.
+
+Commands:
+/help
+/scan
+/analyze
+"""
+
+    await update.message.reply_text(text)
+
+# -------------------------
 
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "/scan <target>\n/analyze <problem>"
-    )
+
+    text = """
+[ HELP MENU ]
+
+/scan <target>
+Example:
+/scan google.com
+
+/analyze <problem>
+Example:
+/analyze python error
+
+Or just send normal messages.
+"""
+
+    await update.message.reply_text(text)
+
+# -------------------------
 
 async def scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        target = " ".join(context.args)
 
-        if not target:
-            await update.message.reply_text(
-                "Usage:\n/scan google.com"
-            )
-            return
+    target = " ".join(context.args)
 
-        result = f"""
+    if not target:
+        await update.message.reply_text(
+            "Usage:\n/scan google.com"
+        )
+        return
+
+    result = f"""
 [ SCAN COMPLETE ]
 
 TARGET: {target}
 
-PORT 80  OPEN
-PORT 443 OPEN
+PORT 80   OPEN
+PORT 443  OPEN
+PORT 22   FILTERED
+
+Recon complete.
 """
 
-        await update.message.reply_text(result)
+    await update.message.reply_text(result)
 
-    except Exception as e:
-        print("SCAN ERROR:", e)
+# -------------------------
 
 async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        text = " ".join(context.args)
 
-        if not text:
-            await update.message.reply_text(
-                "Usage:\n/analyze something"
-            )
-            return
+    problem = " ".join(context.args)
 
-        completion = client.chat.completions.create(
-            model="deepseek/deepseek-chat:free",
-            messages=[
-                {
-                    "role": "system",
-                    "content": SYSTEM_PROMPT
-                },
-                {
-                    "role": "user",
-                    "content": text
-                }
-            ]
+    if not problem:
+        await update.message.reply_text(
+            "Usage:\n/analyze something"
         )
+        return
 
-        answer = completion.choices[0].message.content
+    answer = ask_ai(problem)
 
-        await update.message.reply_text(answer)
-
-    except Exception as e:
-        print("ANALYZE ERROR:", e)
-        await update.message.reply_text(str(e))
+    await update.message.reply_text(answer)
 
 # =========================
 # NORMAL CHAT
 # =========================
 
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        text = update.message.text
 
-        # skip command
-        if text.startswith("/"):
-            return
+    text = update.message.text
 
-        completion = client.chat.completions.create(
-            model="deepseek/deepseek-chat:free",
-            messages=[
-                {
-                    "role": "system",
-                    "content": SYSTEM_PROMPT
-                },
-                {
-                    "role": "user",
-                    "content": text
-                }
-            ]
-        )
+    # ignore commands
+    if text.startswith("/"):
+        return
 
-        answer = completion.choices[0].message.content
+    answer = ask_ai(text)
 
-        await update.message.reply_text(answer)
-
-    except Exception as e:
-        print("CHAT ERROR:", e)
-        await update.message.reply_text(str(e))
+    await update.message.reply_text(answer)
 
 # =========================
 # APP
@@ -133,11 +177,13 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
+# commands
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("help", help_cmd))
 app.add_handler(CommandHandler("scan", scan))
 app.add_handler(CommandHandler("analyze", analyze))
 
+# normal chat
 app.add_handler(
     MessageHandler(filters.TEXT, chat)
 )
