@@ -6,24 +6,31 @@ from telegram.ext import (
     ContextTypes,
 )
 
-from google import genai
+from openai import OpenAI
 import os
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=OPENROUTER_API_KEY,
+)
 
 async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         text = update.message.text
 
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=text,
+        completion = client.chat.completions.create(
+            model="openai/gpt-4o-mini",
+            messages=[
+                {"role": "user", "content": text}
+            ]
         )
 
-        await update.message.reply_text(response.text)
+        answer = completion.choices[0].message.content
+
+        await update.message.reply_text(answer)
 
     except Exception as e:
         print("ERROR:", e)
