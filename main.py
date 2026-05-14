@@ -3,9 +3,9 @@ from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTyp
 import google.generativeai as genai
 import os
 
-genai.configure(api_key=os.getenv("AIzaSyCSJJljD58LVxNEd0DHl8P6GFJWNMGPi_s"))
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-model = genai.GenerativeModel("8473059644:AAFmUUlHIgr5urBR-_YyEm7uxp0kMcfoHgA")
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
