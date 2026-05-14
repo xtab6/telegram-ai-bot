@@ -6,21 +6,22 @@ from telegram.ext import (
     ContextTypes,
 )
 
-import google.generativeai as genai
+from google import genai
 import os
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-genai.configure(api_key=GEMINI_API_KEY)
-
-model = genai.GenerativeModel("gemini-1.5-flash-8b")
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         text = update.message.text
 
-        response = model.generate_content(text)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=text,
+        )
 
         await update.message.reply_text(response.text)
 
