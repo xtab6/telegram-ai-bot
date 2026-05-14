@@ -114,6 +114,9 @@ async def analyze(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # =========================
 
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message.text.startswith("/"):
+        return
+
     text = update.message.text
 
     completion = client.chat.completions.create(
@@ -133,7 +136,6 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     answer = completion.choices[0].message.content
 
     await update.message.reply_text(answer)
-
 # =========================
 # APP
 # =========================
