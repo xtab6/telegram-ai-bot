@@ -26,7 +26,7 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         print("ERROR:", e)
-        await update.message.reply_text("Terjadi error.")
+        await update.message.reply_text(str(e))
 
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
