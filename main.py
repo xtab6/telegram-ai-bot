@@ -146,7 +146,7 @@ app.add_handler(CommandHandler("scan", scan))
 app.add_handler(CommandHandler("analyze", analyze))
 
 app.add_handler(
-    MessageHandler(filters.TEXT & ~filters.COMMAND, chat)
+    MessageHandler(filters.TEXT, chat)
 )
 
 print("Cyber AI Bot running...")
